@@ -1,0 +1,49 @@
+version: '3'
+services:
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana_red25
+    ports:
+      - "3025:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_FEATURE_TOGGLES_ENABLE=loki
+    volumes:
+      - grafana_data_red25:/var/lib/grafana
+    networks:
+      - demo-network
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki_red25
+    ports:
+      - "3125:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml
+      - loki_data_red25:/loki
+    networks:
+      - demo-network
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail_red25
+    volumes:
+      - ./promtail-config.yaml:/etc/promtail/config.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log:/var/log:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - demo-network
+    restart: unless-stopped
+
+volumes:
+  grafana_data_red25:
+  loki_data_red25:
+
+networks:
+  demo-network:
+    external: true
